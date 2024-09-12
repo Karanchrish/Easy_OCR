@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import tempfile
 import os
 
-# Helper functions
 def similarity(a, b):
     return SequenceMatcher(None, a, b).ratio()
 
@@ -57,10 +56,8 @@ def display_fps_comparison(gpu_fps, cpu_fps):
     ax.set_ylim(0, max(fps_values) + 2)
     st.pyplot(fig)
 
-# Streamlit app
 st.title("OCR Performance: GPU vs CPU")
 
-# Ensure a unique key for the file uploader widget
 if "video_key" not in st.session_state:
     st.session_state["video_key"] = 0  # Initialize with 0 and increment if needed
 
@@ -69,29 +66,24 @@ frame_skip = st.slider("Frame Skip", min_value=1, max_value=10, value=5, key="fr
 resize_factor = st.slider("Resize Factor", min_value=0.1, max_value=1.0, value=0.5, step=0.1, key="resize_factor_slider")
 
 if uploaded_file is not None:
-    # Save uploaded video to a temporary file
     with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
         tmp_file.write(uploaded_file.read())
         video_path = tmp_file.name
 
-    # Select device
     device_gpu = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    # GPU processing
     st.text("Loading GPU model...")
     reader_gpu = easyocr.Reader(['en'], gpu=True)
 
     st.text("Processing video with GPU...")
     gpu_fps, gpu_results = process_video(video_path, reader_gpu, frame_skip=frame_skip, resize_factor=resize_factor)
 
-    # CPU processing
     st.text("Loading CPU model...")
     reader_cpu = easyocr.Reader(['en'], gpu=False)
 
     st.text("Processing video with CPU...")
     cpu_fps, cpu_results = process_video(video_path, reader_cpu, frame_skip=frame_skip, resize_factor=resize_factor)
 
-    # FPS comparison
     if gpu_fps is not None and cpu_fps is not None:
         st.write(f"**GPU FPS:** {gpu_fps:.2f}")
         st.write(f"**CPU FPS:** {cpu_fps:.2f}")
@@ -99,7 +91,6 @@ if uploaded_file is not None:
     else:
         st.error("Could not calculate FPS for one or both runs.")
 
-    # OCR comparison
     if gpu_results is not None and cpu_results is not None:
         st.write(f"\n**Accuracy comparison (sample results):**")
         for i in range(min(5, len(gpu_results))):
@@ -112,8 +103,6 @@ if uploaded_file is not None:
     else:
         st.error("Could not perform OCR accuracy comparison due to missing results.")
 
-    # Cleanup the temporary file
     os.remove(video_path)
 
-    # Increment session key for next upload to avoid the same key being used again
     st.session_state["video_key"] += 1
